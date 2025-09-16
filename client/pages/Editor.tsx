@@ -437,13 +437,16 @@ export default function Editor() {
             <div className="p-6">
               {state.pages.length === 0 ? (
                 <div className="rounded-lg border bg-background p-6 text-sm">
-                  <div className="mb-3 font-medium">Import your existing HTML document</div>
-                  <p className="mb-3 text-muted-foreground">First, create a folder. Then you can import an .html file to auto-create pages, or start adding pages manually.</p>
+                  <div className="mb-2 text-xs uppercase text-muted-foreground">Project (Knowledge Base)</div>
+                  <div className="mb-3 font-medium">Create folders (categories/topics) and pages (articles). Folders can be nested.</div>
+                  <div className="mb-3 text-xs text-muted-foreground">Flow: Create folder → Update folder → Create pages inside → Write content.</div>
+                  <div className="mb-3 font-medium">Import your existing document</div>
+                  <p className="mb-3 text-muted-foreground">Create a folder, then import .html or .md to auto-create pages, or start adding pages manually.</p>
                   <div className="flex items-center gap-2">
                     <button className="rounded-md border px-3 py-1 text-xs" onClick={createFolder}>Create folder</button>
                     <label className="cursor-pointer rounded-md border px-3 py-1 text-xs">
                       Import Document
-                      <input type="file" accept=".html,.htm" className="hidden" onChange={(e) => {
+                      <input type="file" accept=".html,.htm,.md,.markdown,.docx" className="hidden" onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) importDocument(file);
                         e.currentTarget.value = "";
