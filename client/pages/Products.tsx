@@ -101,7 +101,7 @@ export default function Products() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{filtered}Customer Products</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Customer Products</h1>
         {q.get("customerId") && (
           <button className="rounded-md border px-3 py-1.5 text-sm" onClick={() => navigate("/customers")}>Back to customers</button>
         )}
