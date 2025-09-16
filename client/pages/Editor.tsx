@@ -117,6 +117,68 @@ function importHtmlToPages(html: string): Array<{ title: string; content: string
   return sections;
 }
 
+function FolderNode({ folder, depth, state, selectedFolderId, setSelectedFolderId, renamingFolderId, setRenamingFolderId, renameFolder, deleteFolder }: {
+  folder: Folder;
+  depth: number;
+  state: EditorState;
+  selectedFolderId: string | null;
+  setSelectedFolderId: (id: string | null) => void;
+  renamingFolderId: string | null;
+  setRenamingFolderId: (id: string | null) => void;
+  renameFolder: (id: string, name: string) => void;
+  deleteFolder: (id: string) => void;
+}) {
+  const children = state.folders.filter((f) => f.parentId === folder.id);
+  return (
+    <li className="group">
+      <div className={`flex items-center justify-between rounded-md px-2 py-1 ${selectedFolderId === folder.id ? "bg-accent" : "hover:bg-accent"}`} style={{ paddingLeft: Math.min(depth, 4) * 8 }}>
+        {renamingFolderId === folder.id ? (
+          <input
+            className="w-full rounded-sm border bg-background px-2 py-0.5 text-sm"
+            autoFocus
+            defaultValue={folder.name}
+            onBlur={(e) => {
+              renameFolder(folder.id, e.target.value.trim() || folder.name);
+              setRenamingFolderId(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const el = e.target as HTMLInputElement;
+                renameFolder(folder.id, el.value.trim() || folder.name);
+                setRenamingFolderId(null);
+              }
+            }}
+          />
+        ) : (
+          <button className="flex-1 text-left text-sm" onClick={() => setSelectedFolderId(folder.id)}>{folder.name}</button>
+        )}
+        <div className="flex items-center gap-1 opacity-80">
+          <button className="rounded border px-1 text-[11px]" title="Rename" onClick={() => setRenamingFolderId(folder.id)}>✏️</button>
+          <button className="rounded border px-1 text-[11px]" title="Delete" onClick={() => deleteFolder(folder.id)}>🗑️</button>
+        </div>
+      </div>
+      {children.length > 0 && (
+        <ul className="pl-2">
+          {children.map((child) => (
+            <FolderNode
+              key={child.id}
+              folder={child}
+              depth={depth + 1}
+              state={state}
+              selectedFolderId={selectedFolderId}
+              setSelectedFolderId={setSelectedFolderId}
+              renamingFolderId={renamingFolderId}
+              setRenamingFolderId={setRenamingFolderId}
+              renameFolder={renameFolder}
+              deleteFolder={deleteFolder}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
 export default function Editor() {
   const { products } = useData();
   const q = useQuery();
@@ -315,35 +377,19 @@ export default function Editor() {
             <li>
               <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${selectedFolderId === null ? "bg-accent" : "hover:bg-accent"}`} onClick={() => setSelectedFolderId(null)}>All pages</button>
             </li>
-            {state.folders.map((f) => (
-              <li key={f.id} className="group">
-                <div className={`flex items-center justify-between rounded-md px-2 py-1 ${selectedFolderId === f.id ? "bg-accent" : "hover:bg-accent"}`}>
-                  {renamingFolderId === f.id ? (
-                    <input
-                      className="w-full rounded-sm border bg-background px-2 py-0.5 text-sm"
-                      autoFocus
-                      defaultValue={f.name}
-                      onBlur={(e) => {
-                        renameFolder(f.id, e.target.value.trim() || f.name);
-                        setRenamingFolderId(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const el = e.target as HTMLInputElement;
-                          renameFolder(f.id, el.value.trim() || f.name);
-                          setRenamingFolderId(null);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <button className="flex-1 text-left text-sm" onClick={() => setSelectedFolderId(f.id)}>{f.name}</button>
-                  )}
-                  <div className="flex items-center gap-1 opacity-80">
-                    <button className="rounded border px-1 text-[11px]" title="Rename" onClick={() => setRenamingFolderId(f.id)}>✏️</button>
-                    <button className="rounded border px-1 text-[11px]" title="Delete" onClick={() => deleteFolder(f.id)}>🗑️</button>
-                  </div>
-                </div>
-              </li>
+            {state.folders.filter((f) => !f.parentId).map((root) => (
+              <FolderNode
+                key={root.id}
+                folder={root}
+                depth={0}
+                state={state}
+                selectedFolderId={selectedFolderId}
+                setSelectedFolderId={setSelectedFolderId}
+                renamingFolderId={renamingFolderId}
+                setRenamingFolderId={setRenamingFolderId}
+                renameFolder={renameFolder}
+                deleteFolder={deleteFolder}
+              />
             ))}
           </ul>
 
