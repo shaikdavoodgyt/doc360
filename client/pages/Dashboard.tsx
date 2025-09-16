@@ -30,7 +30,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <section className="flex flex-col gap-4 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 p-8 text-primary-foreground">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="max-w-2xl text-white/90">Overview of your knowledge base activity. Create customers and manage products.</p>
+        <p className="max-w-2xl text-white/90">Overview of your Customers activity. Create customers and manage products.</p>
         <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs">
           <span className="h-2 w-2 rounded-full bg-lime-300" />
           Server status: {status}
