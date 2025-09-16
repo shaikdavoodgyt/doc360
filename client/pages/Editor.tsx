@@ -207,7 +207,7 @@ export default function Editor() {
 
   function createFolder() {
     const id = crypto.randomUUID();
-    setState((s) => ({ ...s, folders: [...s.folders, { id, name: `Folder ${s.folders.length + 1}` }] }));
+    setState((s) => ({ ...s, folders: [...s.folders, { id, name: `Folder ${s.folders.length + 1}`, parentId: selectedFolderId || null }] }));
     setSelectedFolderId(id);
     setRenamingFolderId(id);
   }
