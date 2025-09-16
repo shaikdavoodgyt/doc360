@@ -463,7 +463,7 @@ export default function Editor() {
           </ul>
 
           <div className="mt-4">
-            <div className="mb-1 text-xs font-medium text-muted-foreground">Pages</div>
+            <div className="mb-1 text-xs font-medium text-muted-foreground">All Pages</div>
             <ul className="space-y-1">
               {state.pages
                 .filter((p) => {
