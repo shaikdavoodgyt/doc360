@@ -129,6 +129,10 @@ export default function Editor() {
   }
 
   function createPage() {
+    if (!selectedFolderId) {
+      alert("Please create and select a folder first.");
+      return;
+    }
     const id = crypto.randomUUID();
     const title = `Page ${state.pages.length + 1}`;
     const now = new Date().toISOString();
