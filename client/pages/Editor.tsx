@@ -539,6 +539,41 @@ export default function Editor() {
                   Attach file
                   <input type="file" className="hidden" onChange={(e) => e.target.files && e.target.files[0] && onInsertFile(e.target.files[0])} />
                 </label>
+                <label className="cursor-pointer rounded-md border px-2 py-1 text-xs">
+                  Import into page
+                  <input type="file" accept=".html,.htm,.md,.markdown,.docx" className="hidden" onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) importIntoPage(f, (html) => updatePage({ contentHtml: html }));
+                    e.currentTarget.value = "";
+                  }} />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 border-b p-2">
+                <select
+                  className="rounded-md border bg-background px-2 py-1 text-xs"
+                  value={selectedPage.folderId || ""}
+                  onChange={(e) => updatePage({ folderId: e.target.value || null })}
+                >
+                  <option value="">No folder</option>
+                  {state.folders.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+                <input
+                  className="min-w-[200px] flex-1 rounded-md border bg-background px-2 py-1 text-xs"
+                  placeholder="Description"
+                  value={selectedPage.description || ""}
+                  onChange={(e) => updatePage({ description: e.target.value })}
+                />
+                <input
+                  className="min-w-[200px] flex-1 rounded-md border bg-background px-2 py-1 text-xs"
+                  placeholder="Tags (comma separated)"
+                  defaultValue={(selectedPage.tags || []).join(", ")}
+                  onBlur={(e) => updatePage({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })}
+                />
+                <label className="flex items-center gap-1 text-xs">
+                  <input type="checkbox" checked={!!selectedPage.published} onChange={(e) => updatePage({ published: e.target.checked })} /> Published
+                </label>
               </div>
               <div
                 ref={editorRef}
