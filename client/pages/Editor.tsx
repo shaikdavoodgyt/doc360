@@ -406,7 +406,7 @@ export default function Editor() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          // <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
           <div className="text-sm text-muted-foreground">Project Document. Create Topics and pages.</div>
         </div>
         <div className="flex items-center gap-2">
