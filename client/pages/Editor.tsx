@@ -8,9 +8,9 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search]);
 }
 
-type Folder = { id: string; name: string };
+type Folder = { id: string; name: string; parentId?: string | null };
 
-type PageDoc = { id: string; title: string; slug: string; folderId?: string | null; contentHtml: string; createdAt: string; updatedAt: string };
+type PageDoc = { id: string; title: string; slug: string; folderId?: string | null; contentHtml: string; createdAt: string; updatedAt: string; description?: string; published?: boolean; tags?: string[] };
 
 type EditorState = { folders: Folder[]; pages: PageDoc[] };
 
@@ -27,6 +27,17 @@ function loadState(productId: string): EditorState {
 
 function saveState(productId: string, state: EditorState) {
   localStorage.setItem(`editor_${productId}`, JSON.stringify(state));
+}
+
+function getDescendantFolderIds(rootId: string, folders: Folder[]): Set<string> {
+  const ids = new Set<string>();
+  const queue = [rootId];
+  while (queue.length) {
+    const id = queue.shift()!;
+    ids.add(id);
+    folders.filter((f) => f.parentId === id).forEach((f) => queue.push(f.id));
+  }
+  return ids;
 }
 
 function slugify(input: string) {
