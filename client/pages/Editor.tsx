@@ -117,6 +117,37 @@ function importHtmlToPages(html: string): Array<{ title: string; content: string
   return sections;
 }
 
+function markdownToHtml(md: string): string {
+  let html = md;
+  html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+  html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>');
+  html = html
+    .split(/\n{2,}/)
+    .map((para) => (/^<h[1-6]>/.test(para.trim()) ? para : `<p>${para.trim()}</p>`))
+    .join('\n');
+  return html;
+}
+
+async function importIntoPage(file: File, onDone: (html: string) => void) {
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  if (ext === "docx") {
+    alert("DOCX import is not supported in this local editor. Please convert to HTML or Markdown and import again.");
+    return;
+  }
+  const text = await file.text();
+  let html = '';
+  if (ext === 'md' || ext === 'markdown') html = markdownToHtml(text);
+  else html = new DOMParser().parseFromString(text, 'text/html').body.innerHTML;
+  onDone(html);
+}
+
 function FolderNode({ folder, depth, state, selectedFolderId, setSelectedFolderId, renamingFolderId, setRenamingFolderId, renameFolder, deleteFolder }: {
   folder: Folder;
   depth: number;
