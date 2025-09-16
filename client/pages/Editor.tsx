@@ -253,7 +253,7 @@ export default function Editor() {
             <div className="text-sm font-medium">Folders</div>
             <div className="flex items-center gap-2">
               <button className="rounded-md border px-2 py-1 text-xs" onClick={createFolder}>New folder</button>
-              <button className="rounded-md border px-2 py-1 text-xs" onClick={createPage}>New page</button>
+              <button className="rounded-md border px-2 py-1 text-xs disabled:opacity-50" disabled={!selectedFolderId} title={!selectedFolderId ? "Select a folder first" : undefined} onClick={createPage}>New page</button>
             </div>
           </div>
           <ul className="space-y-1">
