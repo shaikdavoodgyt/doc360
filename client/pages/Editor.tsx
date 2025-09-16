@@ -319,7 +319,27 @@ export default function Editor() {
 
         <main className="col-span-9 rounded-xl border bg-card">
           {!selectedPage ? (
-            <div className="p-6 text-muted-foreground">Select a page or create a new one to start editing.</div>
+            <div className="p-6">
+              {state.pages.length === 0 ? (
+                <div className="rounded-lg border bg-background p-6 text-sm">
+                  <div className="mb-3 font-medium">Import your existing HTML document</div>
+                  <p className="mb-3 text-muted-foreground">First, create a folder. Then you can import an .html file to auto-create pages, or start adding pages manually.</p>
+                  <div className="flex items-center gap-2">
+                    <button className="rounded-md border px-3 py-1 text-xs" onClick={createFolder}>Create folder</button>
+                    <label className="cursor-pointer rounded-md border px-3 py-1 text-xs">
+                      Import Document
+                      <input type="file" accept=".html,.htm" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) importDocument(file);
+                        e.currentTarget.value = "";
+                      }} />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-muted-foreground">Select a page or create a new one to start editing.</div>
+              )}
+            </div>
           ) : (
             <div className="flex h-[70vh] flex-col">
               <div className="flex flex-wrap items-center gap-2 border-b p-2">
