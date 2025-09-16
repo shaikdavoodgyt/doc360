@@ -347,7 +347,7 @@ export default function Editor() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
-          <div className="text-sm text-muted-foreground">Create folders and pages. Edit content with the toolbar.</div>
+          <div className="text-sm text-muted-foreground">Project (Knowledge Base). Create folders (categories/topics) and pages (articles). Folders can be nested.</div>
         </div>
         <div className="flex items-center gap-2">
           <label className="cursor-pointer rounded-md border px-3 py-1.5 text-sm">
