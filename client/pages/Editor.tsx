@@ -299,13 +299,26 @@ export default function Editor() {
   }
 
   async function importDocument(file: File) {
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    if (ext === "docx") {
+      alert("DOCX import is not supported in this local editor. Please convert to HTML or Markdown and import again.");
+      return;
+    }
     const text = await file.text();
-    const pages = importHtmlToPages(text);
+    let pages: Array<{ title: string; content: string }> = [];
+    if (ext === "md" || ext === "markdown") {
+      const html = markdownToHtml(text);
+      const firstHeading = (text.match(/^\s*#\s+(.+)$/m) || [])[1];
+      const title = firstHeading ? firstHeading.trim() : (product?.name ? `${product.name} - Imported` : "Imported Markdown");
+      pages = [{ title, content: html }];
+    } else {
+      pages = importHtmlToPages(text);
+    }
     let folderId = selectedFolderId;
     let willSelectPageId: string | null = null;
     if (!folderId) {
       folderId = crypto.randomUUID();
-      setState((s) => ({ ...s, folders: [...s.folders, { id: folderId!, name: "Imported" }] }));
+      setState((s) => ({ ...s, folders: [...s.folders, { id: folderId!, name: "Imported", parentId: null }] }));
       setSelectedFolderId(folderId);
     }
     const now = new Date().toISOString();
@@ -316,6 +329,16 @@ export default function Editor() {
     });
     setState((s) => ({ ...s, pages: [...s.pages, ...newPages] }));
     if (willSelectPageId) setSelectedPageId(willSelectPageId);
+  }
+
+  function exportPdf() {
+    const ordered = [...state.pages].sort((a, b) => a.title.localeCompare(b.title));
+    const html = buildStaticHtml(product?.name || "Document", ordered);
+    const w = window.open("")!;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
   }
 
   function downloadHtml() {
