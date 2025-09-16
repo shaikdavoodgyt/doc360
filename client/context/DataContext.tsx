@@ -25,6 +25,7 @@ interface DataState {
   customers: Customer[];
   products: Product[];
   addCustomer: (c: Omit<Customer, "id" | "status" | "createdAt" | "updatedAt">) => Customer;
+  addProduct: (p: { customerId: string; name: string; desc?: string }) => Product;
 }
 
 const DataCtx = createContext<DataState | undefined>(undefined);
@@ -64,8 +65,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return c;
   }
 
+  function addProduct(input: { customerId: string; name: string; desc?: string }): Product {
+    const now = new Date().toISOString();
+    const slug = input.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+    const p: Product = {
+      id: crypto.randomUUID(),
+      customerId: input.customerId,
+      name: input.name,
+      slug,
+      desc: input.desc,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setProducts((prev) => [p, ...prev]);
+    return p;
+  }
+
   const value = useMemo<DataState>(
-    () => ({ customers, products, addCustomer }),
+    () => ({ customers, products, addCustomer, addProduct }),
     [customers, products]
   );
 

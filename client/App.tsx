@@ -15,6 +15,8 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Users from "./pages/Users";
 import Profile from "./pages/Profile";
+import Products from "./pages/Products";
+import Editor from "./pages/Editor";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
                 <Route path="/" element={<MainLayout><Dashboard /></MainLayout>} />
                 <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
                 <Route path="/customers" element={<MainLayout><Customers /></MainLayout>} />
+                <Route path="/products" element={<MainLayout><Products /></MainLayout>} />
+                <Route path="/editor" element={<MainLayout><Editor /></MainLayout>} />
                 <Route path="/users" element={<MainLayout><Users /></MainLayout>} />
                 <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
               </Route>
