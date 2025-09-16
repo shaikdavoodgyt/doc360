@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { useData } from "@/context/DataContext";
 import CreateCustomerDialog from "@/components/customers/CreateCustomerDialog";
+import AddProductDialog from "@/components/customers/AddProductDialog";
+import { useNavigate } from "react-router-dom";
 
 export default function Customers() {
   const { customers } = useData();
   const [q, setQ] = useState("");
+  const navigate = useNavigate();
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -41,12 +44,13 @@ export default function Customers() {
               <th className="px-4 py-2">Company</th>
               <th className="px-4 py-2">Status</th>
               <th className="px-4 py-2">Created</th>
+              <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>No customers found.</td>
+                <td className="px-4 py-6 text-muted-foreground" colSpan={7}>No customers found.</td>
               </tr>
             ) : (
               filtered.map((c) => (
@@ -61,6 +65,17 @@ export default function Customers() {
                     </span>
                   </td>
                   <td className="px-4 py-3">{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        className="inline-flex items-center rounded-md border px-3 py-1 text-xs hover:bg-accent"
+                        onClick={() => navigate(`/products?customerId=${encodeURIComponent(c.id)}`)}
+                      >
+                        View products
+                      </button>
+                      <AddProductDialog customerId={c.id} />
+                    </div>
+                  </td>
                 </tr>
               ))
             )}
