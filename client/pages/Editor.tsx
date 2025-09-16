@@ -219,8 +219,14 @@ export default function Editor() {
   function deleteFolder(id: string) {
     setState((s) => ({
       ...s,
-      folders: s.folders.filter((f) => f.id !== id),
-      pages: s.pages.map((p) => (p.folderId === id ? { ...p, folderId: null } : p)),
+      folders: s.folders.filter((f) => {
+        const toDelete = getDescendantFolderIds(id, s.folders);
+        return !toDelete.has(f.id);
+      }),
+      pages: s.pages.map((p) => {
+        const toDelete = getDescendantFolderIds(id, s.folders);
+        return p.folderId && toDelete.has(p.folderId) ? { ...p, folderId: null } : p;
+      }),
     }));
     if (selectedFolderId === id) setSelectedFolderId(null);
   }
