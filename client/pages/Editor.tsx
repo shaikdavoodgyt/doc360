@@ -368,10 +368,18 @@ export default function Editor() {
       <div className="grid grid-cols-12 gap-4">
         <aside className="col-span-3 rounded-xl border bg-card p-3">
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-medium">Folders</div>
+            <div className="text-sm font-medium">Folders (Categories / Topics)</div>
             <div className="flex items-center gap-2">
-              <button className="rounded-md border px-2 py-1 text-xs" onClick={createFolder}>New folder</button>
+              <button className="rounded-md border px-2 py-1 text-xs" onClick={createFolder}>{selectedFolderId ? "New subfolder" : "New folder"}</button>
               <button className="rounded-md border px-2 py-1 text-xs disabled:opacity-50" disabled={!selectedFolderId} title={!selectedFolderId ? "Select a folder first" : undefined} onClick={createPage}>New page</button>
+              <label className="cursor-pointer rounded-md border px-2 py-1 text-xs">
+                Import into folder
+                <input type="file" accept=".html,.htm,.md,.markdown,.docx" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) importDocument(file);
+                  e.currentTarget.value = "";
+                }} />
+              </label>
             </div>
           </div>
           <ul className="space-y-1">
