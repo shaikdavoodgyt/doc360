@@ -406,7 +406,12 @@ export default function Editor() {
             <div className="mb-1 text-xs font-medium text-muted-foreground">Pages</div>
             <ul className="space-y-1">
               {state.pages
-                .filter((p) => (selectedFolderId ? p.folderId === selectedFolderId : true))
+                .filter((p) => {
+                  if (!selectedFolderId) return true;
+                  const ids = getDescendantFolderIds(selectedFolderId, state.folders);
+                  ids.add(selectedFolderId);
+                  return p.folderId ? ids.has(p.folderId) : false;
+                })
                 .sort((a, b) => a.title.localeCompare(b.title))
                 .map((p) => (
                   <li key={p.id} className="group">
