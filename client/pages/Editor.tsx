@@ -82,6 +82,30 @@ function escapeHtml(str: string) {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function importHtmlToPages(html: string): Array<{ title: string; content: string }> {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const sections: Array<{ title: string; content: string }> = [];
+  const headings = Array.from(doc.querySelectorAll("h1, h2"));
+  if (headings.length > 0) {
+    for (let i = 0; i < headings.length; i++) {
+      const h = headings[i];
+      const next = headings[i + 1];
+      const title = h.textContent?.trim() || `Section ${i + 1}`;
+      const range = doc.createRange();
+      range.setStartAfter(h);
+      if (next) range.setEndBefore(next);
+      else range.setEndAfter(doc.body.lastChild as ChildNode);
+      const container = document.createElement("div");
+      container.appendChild(range.cloneContents());
+      sections.push({ title, content: container.innerHTML });
+    }
+  } else {
+    const bodyHtml = doc.body.innerHTML;
+    sections.push({ title: "Imported", content: bodyHtml });
+  }
+  return sections;
+}
+
 export default function Editor() {
   const { products } = useData();
   const q = useQuery();
