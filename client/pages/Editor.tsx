@@ -1,10 +1,357 @@
-import Placeholder from "@/components/Placeholder";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useData } from "@/context/DataContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+function useQuery() {
+  const { search } = useLocation();
+  return useMemo(() => new URLSearchParams(search), [search]);
+}
+
+type Folder = { id: string; name: string };
+
+type PageDoc = { id: string; title: string; slug: string; folderId?: string | null; contentHtml: string; createdAt: string; updatedAt: string };
+
+type EditorState = { folders: Folder[]; pages: PageDoc[] };
+
+function loadState(productId: string): EditorState {
+  try {
+    const raw = localStorage.getItem(`editor_${productId}`);
+    if (!raw) return { folders: [], pages: [] };
+    const parsed = JSON.parse(raw);
+    return { folders: parsed.folders || [], pages: parsed.pages || [] };
+  } catch {
+    return { folders: [], pages: [] };
+  }
+}
+
+function saveState(productId: string, state: EditorState) {
+  localStorage.setItem(`editor_${productId}`, JSON.stringify(state));
+}
+
+function slugify(input: string) {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function buildStaticHtml(title: string, pages: PageDoc[]) {
+  const navLinks = pages.map((p) => `<li><a href="#${p.slug}">${escapeHtml(p.title)}</a></li>`).join("");
+  const sections = pages
+    .map(
+      (p) => `<section id="${p.slug}" style="padding:40px 0;border-top:1px solid #e5e7eb;">
+  <h2 style="font-size:24px;margin-bottom:12px;">${escapeHtml(p.title)}</h2>
+  <div>${p.contentHtml || ""}</div>
+</section>`
+    )
+    .join("");
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;padding:0;color:#111827}
+    header{position:sticky;top:0;background:#111827;color:white;padding:16px 24px;z-index:10}
+    .container{max-width:960px;margin:0 auto;padding:0 24px}
+    nav ul{list-style:none;display:flex;gap:16px;padding:0;margin:0}
+    a{color:#2563eb;text-decoration:none}
+    a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <header><div class="container"><strong>${escapeHtml(title)}</strong></div></header>
+  <main class="container" style="padding:24px 0;">
+    <aside style="float:right;width:240px;padding-left:24px;">
+      <nav><ul>${navLinks}</ul></nav>
+    </aside>
+    <article style="margin-right:264px;">${sections}</article>
+  </main>
+</body>
+</html>`;
+}
+
+function escapeHtml(str: string) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 export default function Editor() {
+  const { products } = useData();
+  const q = useQuery();
+  const navigate = useNavigate();
+  const productId = q.get("productId") || "";
+  const product = products.find((p) => p.id === productId);
+
+  const [state, setState] = useState<EditorState>(() => loadState(productId));
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (productId) saveState(productId, state);
+  }, [productId, state]);
+
+  useEffect(() => {
+    if (!productId) return;
+    const loaded = loadState(productId);
+    setState(loaded);
+  }, [productId]);
+
+  const selectedPage = useMemo(() => state.pages.find((p) => p.id === selectedPageId) || null, [state.pages, selectedPageId]);
+
+  function createFolder() {
+    const id = crypto.randomUUID();
+    setState((s) => ({ ...s, folders: [...s.folders, { id, name: `Folder ${s.folders.length + 1}` }] }));
+    setSelectedFolderId(id);
+    setRenamingFolderId(id);
+  }
+
+  function renameFolder(id: string, name: string) {
+    setState((s) => ({ ...s, folders: s.folders.map((f) => (f.id === id ? { ...f, name } : f)) }));
+  }
+
+  function deleteFolder(id: string) {
+    setState((s) => ({
+      ...s,
+      folders: s.folders.filter((f) => f.id !== id),
+      pages: s.pages.map((p) => (p.folderId === id ? { ...p, folderId: null } : p)),
+    }));
+    if (selectedFolderId === id) setSelectedFolderId(null);
+  }
+
+  function createPage() {
+    const id = crypto.randomUUID();
+    const title = `Page ${state.pages.length + 1}`;
+    const now = new Date().toISOString();
+    const page: PageDoc = { id, title, slug: slugify(title), folderId: selectedFolderId, contentHtml: "", createdAt: now, updatedAt: now };
+    setState((s) => ({ ...s, pages: [...s.pages, page] }));
+    setSelectedPageId(id);
+  }
+
+  function deletePage(id: string) {
+    setState((s) => ({ ...s, pages: s.pages.filter((p) => p.id !== id) }));
+    if (selectedPageId === id) setSelectedPageId(null);
+  }
+
+  function updatePage(patch: Partial<PageDoc>) {
+    if (!selectedPage) return;
+    setState((s) => ({
+      ...s,
+      pages: s.pages.map((p) => (p.id === selectedPage.id ? { ...p, ...patch, updatedAt: new Date().toISOString(), slug: patch.title && !patch.slug ? slugify(patch.title) : p.slug } : p)),
+    }));
+  }
+
+  function onInsertImage(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result as string;
+      insertHTML(`<img src="${src}" alt="image" style="max-width:100%;height:auto;"/>`);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function onInsertFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const href = reader.result as string;
+      const name = file.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      insertHTML(`<p><a href="${href}" download="${file.name}">Download ${name}</a></p>`);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function insertHTML(html: string) {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand("insertHTML", false, html);
+    const htmlContent = editorRef.current.innerHTML;
+    updatePage({ contentHtml: htmlContent });
+  }
+
+  function applyFormat(cmd: string, value?: string) {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(cmd, false, value);
+    const htmlContent = editorRef.current.innerHTML;
+    updatePage({ contentHtml: htmlContent });
+  }
+
+  function openPreview() {
+    const ordered = [...state.pages].sort((a, b) => a.title.localeCompare(b.title));
+    const html = buildStaticHtml(product?.name || "Document", ordered);
+    setPreviewHtml(html);
+  }
+
+  function downloadHtml() {
+    const ordered = [...state.pages].sort((a, b) => a.title.localeCompare(b.title));
+    const html = buildStaticHtml(product?.name || "Document", ordered);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(product?.name || "document").toLowerCase().replace(/\s+/g, "-")}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  useEffect(() => {
+    if (editorRef.current && selectedPage) {
+      editorRef.current.innerHTML = selectedPage.contentHtml || "";
+    }
+  }, [selectedPageId]);
+
+  if (!product) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight">Editor</h1>
+          <button className="rounded-md border px-3 py-1.5 text-sm" onClick={() => navigate("/products")}>Back</button>
+        </div>
+        <div className="rounded-xl border bg-card p-6">Product not found. Please navigate from Products page.</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Editor</h1>
-      <Placeholder title="Editor" description="Folder tree on the left, WYSIWYG center, metadata and actions on the right. We'll integrate a rich text editor and live preview next." />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
+          <div className="text-sm text-muted-foreground">Create folders and pages. Edit content with the toolbar.</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="rounded-md border px-3 py-1.5 text-sm" onClick={() => navigate(`/products?customerId=${encodeURIComponent(product.customerId)}`)}>Back to products</button>
+          <button className="rounded-md border px-3 py-1.5 text-sm" onClick={openPreview}>Preview</button>
+          <button className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground" onClick={downloadHtml}>Download HTML</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-4">
+        <aside className="col-span-3 rounded-xl border bg-card p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-sm font-medium">Folders</div>
+            <div className="flex items-center gap-2">
+              <button className="rounded-md border px-2 py-1 text-xs" onClick={createFolder}>New folder</button>
+              <button className="rounded-md border px-2 py-1 text-xs" onClick={createPage}>New page</button>
+            </div>
+          </div>
+          <ul className="space-y-1">
+            <li>
+              <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${selectedFolderId === null ? "bg-accent" : "hover:bg-accent"}`} onClick={() => setSelectedFolderId(null)}>All pages</button>
+            </li>
+            {state.folders.map((f) => (
+              <li key={f.id} className="group">
+                <div className={`flex items-center justify-between rounded-md px-2 py-1 ${selectedFolderId === f.id ? "bg-accent" : "hover:bg-accent"}`}>
+                  {renamingFolderId === f.id ? (
+                    <input
+                      className="w-full rounded-sm border bg-background px-2 py-0.5 text-sm"
+                      autoFocus
+                      defaultValue={f.name}
+                      onBlur={(e) => {
+                        renameFolder(f.id, e.target.value.trim() || f.name);
+                        setRenamingFolderId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const el = e.target as HTMLInputElement;
+                          renameFolder(f.id, el.value.trim() || f.name);
+                          setRenamingFolderId(null);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <button className="flex-1 text-left text-sm" onClick={() => setSelectedFolderId(f.id)}>{f.name}</button>
+                  )}
+                  <div className="flex items-center gap-1 opacity-80">
+                    <button className="rounded border px-1 text-[11px]" title="Rename" onClick={() => setRenamingFolderId(f.id)}>✏️</button>
+                    <button className="rounded border px-1 text-[11px]" title="Delete" onClick={() => deleteFolder(f.id)}>🗑️</button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4">
+            <div className="mb-1 text-xs font-medium text-muted-foreground">Pages</div>
+            <ul className="space-y-1">
+              {state.pages
+                .filter((p) => (selectedFolderId ? p.folderId === selectedFolderId : true))
+                .sort((a, b) => a.title.localeCompare(b.title))
+                .map((p) => (
+                  <li key={p.id} className="group">
+                    <div className={`flex items-center justify-between rounded-md px-2 py-1 ${selectedPageId === p.id ? "bg-accent" : "hover:bg-accent"}`}>
+                      <button className="flex-1 text-left text-sm" onClick={() => setSelectedPageId(p.id)}>{p.title}</button>
+                      <div className="flex items-center gap-1 opacity-80">
+                        <button className="rounded border px-1 text-[11px]" title="Rename" onClick={() => {
+                          const title = prompt("Rename page", p.title);
+                          if (title) updatePage({ id: p.id } as any);
+                          setState((s) => ({ ...s, pages: s.pages.map((pg) => (pg.id === p.id ? { ...pg, title, slug: slugify(title) } : pg)) }));
+                        }}>✏️</button>
+                        <button className="rounded border px-1 text-[11px]" title="Delete" onClick={() => deletePage(p.id)}>🗑️</button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </aside>
+
+        <main className="col-span-9 rounded-xl border bg-card">
+          {!selectedPage ? (
+            <div className="p-6 text-muted-foreground">Select a page or create a new one to start editing.</div>
+          ) : (
+            <div className="flex h-[70vh] flex-col">
+              <div className="flex flex-wrap items-center gap-2 border-b p-2">
+                <input
+                  className="mr-2 min-w-[200px] flex-1 rounded-md border bg-background px-2 py-1 text-sm"
+                  value={selectedPage.title}
+                  onChange={(e) => setState((s) => ({ ...s, pages: s.pages.map((p) => (p.id === selectedPage.id ? { ...p, title: e.target.value } : p)) }))}
+                  onBlur={(e) => updatePage({ title: e.target.value })}
+                  placeholder="Page title"
+                />
+                <button className="rounded-md border px-2 py-1 text-xs" onClick={() => applyFormat("bold")}>Bold</button>
+                <button className="rounded-md border px-2 py-1 text-xs" onClick={() => applyFormat("italic")}>Italic</button>
+                <button className="rounded-md border px-2 py-1 text-xs" onClick={() => applyFormat("formatBlock", "H2")}>H2</button>
+                <label className="cursor-pointer rounded-md border px-2 py-1 text-xs">
+                  Insert image
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files && e.target.files[0] && onInsertImage(e.target.files[0])} />
+                </label>
+                <label className="cursor-pointer rounded-md border px-2 py-1 text-xs">
+                  Attach file
+                  <input type="file" className="hidden" onChange={(e) => e.target.files && e.target.files[0] && onInsertFile(e.target.files[0])} />
+                </label>
+              </div>
+              <div
+                ref={editorRef}
+                className="min-h-0 flex-1 overflow-auto p-4 prose max-w-none"
+                contentEditable
+                onInput={(e) => updatePage({ contentHtml: (e.target as HTMLDivElement).innerHTML })}
+                suppressContentEditableWarning
+              />
+            </div>
+          )}
+        </main>
+      </div>
+
+      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
+        <DialogContent className="max-w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>Preview</DialogTitle>
+          </DialogHeader>
+          {previewHtml && (
+            <iframe title="preview" className="h-[70vh] w-full rounded-md border" srcDoc={previewHtml} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
