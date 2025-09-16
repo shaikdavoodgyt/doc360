@@ -233,6 +233,14 @@ export default function Editor() {
           <div className="text-sm text-muted-foreground">Create folders and pages. Edit content with the toolbar.</div>
         </div>
         <div className="flex items-center gap-2">
+          <label className="cursor-pointer rounded-md border px-3 py-1.5 text-sm">
+            Import Document
+            <input type="file" accept=".html,.htm" className="hidden" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importDocument(file);
+              e.currentTarget.value = "";
+            }} />
+          </label>
           <button className="rounded-md border px-3 py-1.5 text-sm" onClick={() => navigate(`/products?customerId=${encodeURIComponent(product.customerId)}`)}>Back to products</button>
           <button className="rounded-md border px-3 py-1.5 text-sm" onClick={openPreview}>Preview</button>
           <button className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground" onClick={downloadHtml}>Download HTML</button>
