@@ -406,7 +406,7 @@ export default function Editor() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
+          // <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
           <div className="text-sm text-muted-foreground">Project Document. Create Topics and pages.</div>
         </div>
         <div className="flex items-center gap-2">
@@ -497,8 +497,8 @@ export default function Editor() {
             <div className="p-6">
               {state.pages.length === 0 ? (
                 <div className="rounded-lg border bg-background p-6 text-sm">
-                  <div className="mb-2 text-xs uppercase text-muted-foreground">Project (Knowledge Base)</div>
-                  <div className="mb-3 font-medium">Create folders (categories/topics) and pages (articles). Folders can be nested.</div>
+                  <div className="mb-2 text-xs uppercase text-muted-foreground">Product Document Page</div>
+                  <div className="mb-3 font-medium">Create topics and pages. Folders can be nested.</div>
                   <div className="mb-3 text-xs text-muted-foreground">Flow: Create folder → Update folder → Create pages inside → Write content.</div>
                   <div className="mb-3 font-medium">Import your existing document</div>
                   <p className="mb-3 text-muted-foreground">Create a folder, then import .html or .md to auto-create pages, or start adding pages manually.</p>
