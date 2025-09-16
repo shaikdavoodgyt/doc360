@@ -107,39 +107,25 @@ export default function Products() {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Description</th>
-              <th className="px-4 py-2">Updated</th>
-              <th className="px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={4}>No products yet.</td>
-              </tr>
-            ) : (
-              filtered.map((p) => (
-                <tr key={p.id} className="border-t">
-                  <td className="px-4 py-3 font-medium">{p.name}</td>
-                  <td className="px-4 py-3">{p.desc || "-"}</td>
-                  <td className="px-4 py-3">{new Date(p.updatedAt).toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => navigate(`/editor?productId=${encodeURIComponent(p.id)}`)}>Open editor</button>
-                      <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => onPreview(p.id, p.name)}>Preview</button>
-                      <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => onDownload(p.id, p.name)}>Download HTML</button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div>
+        {filtered.length === 0 ? (
+          <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">No products yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((p) => (
+              <div key={p.id} className="rounded-xl border bg-card p-4">
+                <div className="mb-1 text-sm text-muted-foreground">Updated {new Date(p.updatedAt).toLocaleString()}</div>
+                <h3 className="text-lg font-semibold">{p.name}</h3>
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.desc || "No description"}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => navigate(`/editor?productId=${encodeURIComponent(p.id)}`)}>Open editor</button>
+                  <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => onPreview(p.id, p.name)}>Preview</button>
+                  <button className="rounded-md border px-3 py-1 text-xs hover:bg-accent" onClick={() => onDownload(p.id, p.name)}>Download HTML</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
