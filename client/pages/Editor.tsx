@@ -444,7 +444,7 @@ export default function Editor() {
           </div>
           <ul className="space-y-1">
             <li>
-              <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${selectedFolderId === null ? "bg-accent" : "hover:bg-accent"}`} onClick={() => setSelectedFolderId(null)}>New Folder</button>
+              <button className={`w-full rounded-md px-2 py-1 text-left text-sm ${selectedFolderId === null ? "bg-accent" : "hover:bg-accent"}`} onClick={() => setSelectedFolderId(null)}>All Folders</button>
             </li>
             {state.folders.filter((f) => !f.parentId).map((root) => (
               <FolderNode
