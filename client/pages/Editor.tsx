@@ -219,6 +219,26 @@ export default function Editor() {
     setPreviewHtml(html);
   }
 
+  async function importDocument(file: File) {
+    const text = await file.text();
+    const pages = importHtmlToPages(text);
+    let folderId = selectedFolderId;
+    let willSelectPageId: string | null = null;
+    if (!folderId) {
+      folderId = crypto.randomUUID();
+      setState((s) => ({ ...s, folders: [...s.folders, { id: folderId!, name: "Imported" }] }));
+      setSelectedFolderId(folderId);
+    }
+    const now = new Date().toISOString();
+    const newPages = pages.map((pg, idx) => {
+      const id = crypto.randomUUID();
+      if (idx === 0) willSelectPageId = id;
+      return { id, title: pg.title, slug: slugify(pg.title), folderId, contentHtml: pg.content, createdAt: now, updatedAt: now } as PageDoc;
+    });
+    setState((s) => ({ ...s, pages: [...s.pages, ...newPages] }));
+    if (willSelectPageId) setSelectedPageId(willSelectPageId);
+  }
+
   function downloadHtml() {
     const ordered = [...state.pages].sort((a, b) => a.title.localeCompare(b.title));
     const html = buildStaticHtml(product?.name || "Document", ordered);
